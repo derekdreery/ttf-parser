@@ -6,7 +6,8 @@ fn version_05() {
     let table = Table::parse(&[
         0x00, 0x00, 0x50, 0x00, // version: 0.3125
         0x00, 0x01, // number of glyphs: 1
-    ]).unwrap();
+    ])
+    .unwrap();
     assert_eq!(table.number_of_glyphs, NonZeroU16::new(1).unwrap());
 }
 
@@ -28,7 +29,8 @@ fn version_1_full() {
         0x00, 0x00, // maximum byte count for glyph instructions: 0
         0x00, 0x00, // maximum number of components: 0
         0x00, 0x00, // maximum levels of recursion: 0
-    ]).unwrap();
+    ])
+    .unwrap();
     assert_eq!(table.number_of_glyphs, NonZeroU16::new(1).unwrap());
 }
 
@@ -38,7 +40,8 @@ fn version_1_trimmed() {
     let table = Table::parse(&[
         0x00, 0x01, 0x00, 0x00, // version: 1
         0x00, 0x01, // number of glyphs: 1
-    ]).unwrap();
+    ])
+    .unwrap();
     assert_eq!(table.number_of_glyphs, NonZeroU16::new(1).unwrap());
 }
 

@@ -1,9 +1,10 @@
 //! A [PostScript Table](
 //! https://docs.microsoft.com/en-us/typography/opentype/spec/post) implementation.
 
+use crate::parser::{Fixed, LazyArray16, Stream};
+#[cfg(feature = "glyph-names")]
+use crate::GlyphId;
 use crate::LineMetrics;
-use crate::parser::{Stream, Fixed, LazyArray16};
-#[cfg(feature = "glyph-names")] use crate::GlyphId;
 
 const TABLE_SIZE: usize = 32;
 const ITALIC_ANGLE_OFFSET: usize = 4;
@@ -275,7 +276,6 @@ const MACINTOSH_NAMES: &[&str] = &[
     "dcroat",
 ];
 
-
 /// A list of glyph names.
 #[derive(Clone, Copy, Default)]
 pub struct Names<'a> {
@@ -336,7 +336,6 @@ impl core::fmt::Debug for Names<'_> {
     }
 }
 
-
 /// A [PostScript Table](https://docs.microsoft.com/en-us/typography/opentype/spec/post).
 #[derive(Clone, Copy, Debug)]
 pub struct Table<'a> {
@@ -350,7 +349,6 @@ pub struct Table<'a> {
     pub names: Names<'a>,
 }
 
-
 impl<'a> Table<'a> {
     /// Parses a table from raw data.
     pub fn parse(data: &'a [u8]) -> Option<Self> {
@@ -359,9 +357,11 @@ impl<'a> Table<'a> {
         }
 
         let version = Stream::new(data).read::<u32>()?;
-        if !(version == 0x00010000 || version == 0x00020000 ||
-             version == 0x00025000 || version == 0x00030000 ||
-             version == 0x00040000)
+        if !(version == 0x00010000
+            || version == 0x00020000
+            || version == 0x00025000
+            || version == 0x00030000
+            || version == 0x00040000)
         {
             return None;
         }

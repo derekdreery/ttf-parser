@@ -1,4 +1,6 @@
-use crate::parser::{FromData, FromSlice, LazyArray16, LazyOffsetArray16, Offset, Offset16, Offset32, Stream};
+use crate::parser::{
+    FromData, FromSlice, LazyArray16, LazyOffsetArray16, Offset, Offset16, Offset32, Stream,
+};
 
 /// A list of [`Lookup`] values.
 pub type LookupList<'a> = LazyOffsetArray16<'a, Lookup<'a>>;
@@ -29,7 +31,11 @@ impl<'a> FromSlice<'a> for Lookup<'a> {
 
         Some(Self {
             flags,
-            subtables: LookupSubtables { kind, data, offsets },
+            subtables: LookupSubtables {
+                kind,
+                data,
+                offsets,
+            },
             mark_filtering_set,
         })
     }
@@ -117,13 +123,34 @@ pub struct LookupFlags(pub u16);
 
 #[allow(missing_docs)]
 impl LookupFlags {
-    #[inline] pub fn right_to_left(self) -> bool { self.0 & 0x0001 != 0 }
-    #[inline] pub fn ignore_base_glyphs(self) -> bool { self.0 & 0x0002 != 0 }
-    #[inline] pub fn ignore_ligatures(self) -> bool { self.0 & 0x0004 != 0 }
-    #[inline] pub fn ignore_marks(self) -> bool { self.0 & 0x0008 != 0 }
-    #[inline] pub fn ignore_flags(self) -> bool { self.0 & 0x000E != 0 }
-    #[inline] pub fn use_mark_filtering_set(self) -> bool { self.0 & 0x0010 != 0 }
-    #[inline] pub fn mark_attachment_type(self) -> u8 { (self.0 & 0xFF00) as u8 }
+    #[inline]
+    pub fn right_to_left(self) -> bool {
+        self.0 & 0x0001 != 0
+    }
+    #[inline]
+    pub fn ignore_base_glyphs(self) -> bool {
+        self.0 & 0x0002 != 0
+    }
+    #[inline]
+    pub fn ignore_ligatures(self) -> bool {
+        self.0 & 0x0004 != 0
+    }
+    #[inline]
+    pub fn ignore_marks(self) -> bool {
+        self.0 & 0x0008 != 0
+    }
+    #[inline]
+    pub fn ignore_flags(self) -> bool {
+        self.0 & 0x000E != 0
+    }
+    #[inline]
+    pub fn use_mark_filtering_set(self) -> bool {
+        self.0 & 0x0010 != 0
+    }
+    #[inline]
+    pub fn mark_attachment_type(self) -> u8 {
+        (self.0 & 0xFF00) as u8
+    }
 }
 
 impl FromData for LookupFlags {

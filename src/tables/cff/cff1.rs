@@ -9,15 +9,16 @@
 use core::convert::TryFrom;
 use core::ops::Range;
 
-use crate::{GlyphId, OutlineBuilder, Rect, BBox};
-use crate::parser::{Stream, LazyArray16, NumFrom, TryNumFrom};
-use super::{Builder, IsEven, CFFError, StringId, calc_subroutine_bias, conv_subroutine_index};
 use super::argstack::ArgumentsStack;
-use super::charset::{STANDARD_ENCODING, Charset, parse_charset};
+use super::charset::{parse_charset, Charset, STANDARD_ENCODING};
 use super::charstring::CharStringParser;
 use super::dict::DictionaryParser;
-use super::index::{Index, parse_index, skip_index};
-#[cfg(feature = "glyph-names")] use super::std_names::STANDARD_NAMES;
+use super::index::{parse_index, skip_index, Index};
+#[cfg(feature = "glyph-names")]
+use super::std_names::STANDARD_NAMES;
+use super::{calc_subroutine_bias, conv_subroutine_index, Builder, CFFError, IsEven, StringId};
+use crate::parser::{LazyArray16, NumFrom, Stream, TryNumFrom};
+use crate::{BBox, GlyphId, OutlineBuilder, Rect};
 
 // Limits according to the Adobe Technical Note #5176, chapter 4 DICT Data.
 const MAX_OPERANDS_LEN: usize = 48;
@@ -30,46 +31,46 @@ const TWO_BYTE_OPERATOR_MARK: u8 = 12;
 
 /// Enumerates some operators defined in the Adobe Technical Note #5177.
 mod operator {
-    pub const HORIZONTAL_STEM: u8           = 1;
-    pub const VERTICAL_STEM: u8             = 3;
-    pub const VERTICAL_MOVE_TO: u8          = 4;
-    pub const LINE_TO: u8                   = 5;
-    pub const HORIZONTAL_LINE_TO: u8        = 6;
-    pub const VERTICAL_LINE_TO: u8          = 7;
-    pub const CURVE_TO: u8                  = 8;
-    pub const CALL_LOCAL_SUBROUTINE: u8     = 10;
-    pub const RETURN: u8                    = 11;
-    pub const ENDCHAR: u8                   = 14;
+    pub const HORIZONTAL_STEM: u8 = 1;
+    pub const VERTICAL_STEM: u8 = 3;
+    pub const VERTICAL_MOVE_TO: u8 = 4;
+    pub const LINE_TO: u8 = 5;
+    pub const HORIZONTAL_LINE_TO: u8 = 6;
+    pub const VERTICAL_LINE_TO: u8 = 7;
+    pub const CURVE_TO: u8 = 8;
+    pub const CALL_LOCAL_SUBROUTINE: u8 = 10;
+    pub const RETURN: u8 = 11;
+    pub const ENDCHAR: u8 = 14;
     pub const HORIZONTAL_STEM_HINT_MASK: u8 = 18;
-    pub const HINT_MASK: u8                 = 19;
-    pub const COUNTER_MASK: u8              = 20;
-    pub const MOVE_TO: u8                   = 21;
-    pub const HORIZONTAL_MOVE_TO: u8        = 22;
-    pub const VERTICAL_STEM_HINT_MASK: u8   = 23;
-    pub const CURVE_LINE: u8                = 24;
-    pub const LINE_CURVE: u8                = 25;
-    pub const VV_CURVE_TO: u8               = 26;
-    pub const HH_CURVE_TO: u8               = 27;
-    pub const SHORT_INT: u8                 = 28;
-    pub const CALL_GLOBAL_SUBROUTINE: u8    = 29;
-    pub const VH_CURVE_TO: u8               = 30;
-    pub const HV_CURVE_TO: u8               = 31;
-    pub const HFLEX: u8                     = 34;
-    pub const FLEX: u8                      = 35;
-    pub const HFLEX1: u8                    = 36;
-    pub const FLEX1: u8                     = 37;
-    pub const FIXED_16_16: u8               = 255;
+    pub const HINT_MASK: u8 = 19;
+    pub const COUNTER_MASK: u8 = 20;
+    pub const MOVE_TO: u8 = 21;
+    pub const HORIZONTAL_MOVE_TO: u8 = 22;
+    pub const VERTICAL_STEM_HINT_MASK: u8 = 23;
+    pub const CURVE_LINE: u8 = 24;
+    pub const LINE_CURVE: u8 = 25;
+    pub const VV_CURVE_TO: u8 = 26;
+    pub const HH_CURVE_TO: u8 = 27;
+    pub const SHORT_INT: u8 = 28;
+    pub const CALL_GLOBAL_SUBROUTINE: u8 = 29;
+    pub const VH_CURVE_TO: u8 = 30;
+    pub const HV_CURVE_TO: u8 = 31;
+    pub const HFLEX: u8 = 34;
+    pub const FLEX: u8 = 35;
+    pub const HFLEX1: u8 = 36;
+    pub const FLEX1: u8 = 37;
+    pub const FIXED_16_16: u8 = 255;
 }
 
 /// Enumerates some operators defined in the Adobe Technical Note #5176,
 /// Table 9 Top DICT Operator Entries
 mod top_dict_operator {
-    pub const CHARSET_OFFSET: u16               = 15;
-    pub const CHAR_STRINGS_OFFSET: u16          = 17;
+    pub const CHARSET_OFFSET: u16 = 15;
+    pub const CHAR_STRINGS_OFFSET: u16 = 17;
     pub const PRIVATE_DICT_SIZE_AND_OFFSET: u16 = 18;
-    pub const ROS: u16                          = 1230;
-    pub const FD_ARRAY: u16                     = 1236;
-    pub const FD_SELECT: u16                    = 1237;
+    pub const ROS: u16 = 1230;
+    pub const FD_ARRAY: u16 = 1236;
+    pub const FD_SELECT: u16 = 1237;
 }
 
 /// Enumerates some operators defined in the Adobe Technical Note #5176,
@@ -163,7 +164,7 @@ mod tests {
             0x0C, // index [1]: 14
             0x1D, 0x7F, 0xFF, 0xFF, 0xFF, // length: i32::MAX
             0x1D, 0x7F, 0xFF, 0xFF, 0xFF, // offset: i32::MAX
-            0x12 // operator: 18 (private)
+            0x12, // operator: 18 (private)
         ];
 
         let top_dict = parse_top_dict(&mut Stream::new(data)).unwrap();
@@ -332,7 +333,6 @@ fn parse_char_string(
     bbox.to_rect().ok_or(CFFError::BboxOverflow)
 }
 
-
 fn _parse_char_string(
     ctx: &mut CharStringParserContext,
     char_string: &[u8],
@@ -347,10 +347,10 @@ fn _parse_char_string(
                 // Reserved.
                 return Err(CFFError::InvalidOperator);
             }
-            operator::HORIZONTAL_STEM |
-            operator::VERTICAL_STEM |
-            operator::HORIZONTAL_STEM_HINT_MASK |
-            operator::VERTICAL_STEM_HINT_MASK => {
+            operator::HORIZONTAL_STEM
+            | operator::VERTICAL_STEM
+            | operator::HORIZONTAL_STEM_HINT_MASK
+            | operator::VERTICAL_STEM_HINT_MASK => {
                 // y dy {dya dyb}* hstem
                 // x dx {dxa dxb}* vstem
                 // y dy {dya dyb}* hstemhm
@@ -404,16 +404,17 @@ fn _parse_char_string(
                 // a local subroutine is actually requested by the glyphs charstring.
                 if ctx.local_subrs.is_none() {
                     if let FontKind::CID(ref cid) = ctx.metadata.kind {
-                        ctx.local_subrs = parse_cid_local_subrs(
-                            ctx.metadata.table_data, ctx.glyph_id, cid
-                        );
+                        ctx.local_subrs =
+                            parse_cid_local_subrs(ctx.metadata.table_data, ctx.glyph_id, cid);
                     }
                 }
 
                 if let Some(local_subrs) = ctx.local_subrs {
                     let subroutine_bias = calc_subroutine_bias(local_subrs.len());
                     let index = conv_subroutine_index(p.stack.pop(), subroutine_bias)?;
-                    let char_string = local_subrs.get(index).ok_or(CFFError::InvalidSubroutineIndex)?;
+                    let char_string = local_subrs
+                        .get(index)
+                        .ok_or(CFFError::InvalidSubroutineIndex)?;
                     _parse_char_string(ctx, char_string, depth + 1, p)?;
                 } else {
                     return Err(CFFError::NoLocalSubroutines);
@@ -462,13 +463,19 @@ fn _parse_char_string(
                         return Err(CFFError::NestingLimitReached);
                     }
 
-                    let base_char_string = ctx.metadata.char_strings.get(u32::from(base_char.0))
+                    let base_char_string = ctx
+                        .metadata
+                        .char_strings
+                        .get(u32::from(base_char.0))
                         .ok_or(CFFError::InvalidSeacCode)?;
                     _parse_char_string(ctx, base_char_string, depth + 1, p)?;
                     p.x = dx;
                     p.y = dy;
 
-                    let accent_char_string = ctx.metadata.char_strings.get(u32::from(accent_char.0))
+                    let accent_char_string = ctx
+                        .metadata
+                        .char_strings
+                        .get(u32::from(accent_char.0))
                         .ok_or(CFFError::InvalidSeacCode)?;
                     _parse_char_string(ctx, accent_char_string, depth + 1, p)?;
                 } else if p.stack.len() == 1 && !ctx.width_parsed {
@@ -550,7 +557,10 @@ fn _parse_char_string(
 
                 let subroutine_bias = calc_subroutine_bias(ctx.metadata.global_subrs.len());
                 let index = conv_subroutine_index(p.stack.pop(), subroutine_bias)?;
-                let char_string = ctx.metadata.global_subrs.get(index)
+                let char_string = ctx
+                    .metadata
+                    .global_subrs
+                    .get(index)
                     .ok_or(CFFError::InvalidSubroutineIndex)?;
                 _parse_char_string(ctx, char_string, depth + 1, p)?;
 
@@ -597,13 +607,16 @@ fn seac_code_to_glyph_id(charset: &Charset, n: f32) -> Option<GlyphId> {
     match charset {
         Charset::ISOAdobe => {
             // ISO Adobe charset only defines string ids up to 228 (zcaron)
-            if code <= 228 { Some(GlyphId(sid.0)) } else { None }
+            if code <= 228 {
+                Some(GlyphId(sid.0))
+            } else {
+                None
+            }
         }
         Charset::Expert | Charset::ExpertSubset => None,
         _ => charset.sid_to_gid(sid),
     }
 }
-
 
 #[derive(Clone, Copy, Debug)]
 enum FDSelect<'a> {
@@ -689,11 +702,14 @@ fn parse_sid_metadata(data: &[u8], top_dict: TopDict) -> Option<FontKind> {
 }
 
 fn parse_cid_metadata(data: &[u8], top_dict: TopDict, number_of_glyphs: u16) -> Option<FontKind> {
-    let (charset_offset, fd_array_offset, fd_select_offset) =
-        match (top_dict.charset_offset, top_dict.fd_array_offset, top_dict.fd_select_offset) {
-            (Some(a), Some(b), Some(c)) => (a, b, c),
-            _ => return None, // charset, FDArray and FDSelect must be set.
-        };
+    let (charset_offset, fd_array_offset, fd_select_offset) = match (
+        top_dict.charset_offset,
+        top_dict.fd_array_offset,
+        top_dict.fd_select_offset,
+    ) {
+        (Some(a), Some(b), Some(c)) => (a, b, c),
+        _ => return None, // charset, FDArray and FDSelect must be set.
+    };
 
     if charset_offset <= charset_id::EXPERT_SUBSET {
         // 'There are no predefined charsets for CID fonts.'
@@ -716,7 +732,6 @@ fn parse_cid_metadata(data: &[u8], top_dict: TopDict, number_of_glyphs: u16) -> 
     Some(FontKind::CID(metadata))
 }
 
-
 /// A [Compact Font Format Table](
 /// https://docs.microsoft.com/en-us/typography/opentype/spec/cff).
 #[derive(Clone, Copy)]
@@ -725,7 +740,8 @@ pub struct Table<'a> {
     // Used to resolve a local subroutine in a CID font.
     table_data: &'a [u8],
 
-    #[allow(dead_code)] strings: Index<'a>,
+    #[allow(dead_code)]
+    strings: Index<'a>,
     global_subrs: Index<'a>,
     charset: Charset<'a>,
     char_strings: Index<'a>,
@@ -810,7 +826,10 @@ impl<'a> Table<'a> {
         glyph_id: GlyphId,
         builder: &mut dyn OutlineBuilder,
     ) -> Result<Rect, CFFError> {
-        let data = self.char_strings.get(u32::from(glyph_id.0)).ok_or(CFFError::NoGlyph)?;
+        let data = self
+            .char_strings
+            .get(u32::from(glyph_id.0))
+            .ok_or(CFFError::NoGlyph)?;
         parse_char_string(data, self, glyph_id, builder)
     }
 

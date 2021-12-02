@@ -1,6 +1,6 @@
-use crate::parser::{Stream, Fixed};
 use super::argstack::ArgumentsStack;
-use super::{Builder, CFFError, IsEven, f32_abs};
+use super::{f32_abs, Builder, CFFError, IsEven};
+use crate::parser::{Fixed, Stream};
 
 pub(crate) struct CharStringParser<'a> {
     pub stack: ArgumentsStack<'a>,
@@ -369,7 +369,12 @@ impl CharStringParser<'_> {
             let x2 = x1 + self.stack.pop();
             let y2 = y1 + self.stack.pop();
             self.y = y2 + self.stack.pop();
-            self.x = x2 + if self.stack.len() == 1 { self.stack.pop() } else { 0.0 };
+            self.x = x2
+                + if self.stack.len() == 1 {
+                    self.stack.pop()
+                } else {
+                    0.0
+                };
             self.builder.curve_to(x1, y1, x2, y2, self.x, self.y);
             if self.stack.is_empty() {
                 break;
@@ -384,7 +389,12 @@ impl CharStringParser<'_> {
             let x2 = x1 + self.stack.pop();
             let y2 = y1 + self.stack.pop();
             self.x = x2 + self.stack.pop();
-            self.y = y2 + if self.stack.len() == 1 { self.stack.pop() } else { 0.0 };
+            self.y = y2
+                + if self.stack.len() == 1 {
+                    self.stack.pop()
+                } else {
+                    0.0
+                };
             self.builder.curve_to(x1, y1, x2, y2, self.x, self.y);
         }
 
@@ -416,7 +426,12 @@ impl CharStringParser<'_> {
             let x2 = x1 + self.stack.pop();
             let y2 = y1 + self.stack.pop();
             self.x = x2 + self.stack.pop();
-            self.y = y2 + if self.stack.len() == 1 { self.stack.pop() } else { 0.0 };
+            self.y = y2
+                + if self.stack.len() == 1 {
+                    self.stack.pop()
+                } else {
+                    0.0
+                };
             self.builder.curve_to(x1, y1, x2, y2, self.x, self.y);
             if self.stack.is_empty() {
                 break;
@@ -431,7 +446,12 @@ impl CharStringParser<'_> {
             let x2 = x1 + self.stack.pop();
             let y2 = y1 + self.stack.pop();
             self.y = y2 + self.stack.pop();
-            self.x = x2 + if self.stack.len() == 1 { self.stack.pop() } else { 0.0 };
+            self.x = x2
+                + if self.stack.len() == 1 {
+                    self.stack.pop()
+                } else {
+                    0.0
+                };
             self.builder.curve_to(x1, y1, x2, y2, self.x, self.y);
         }
 

@@ -1,54 +1,45 @@
-use crate::GlyphId;
-use crate::parser::{Stream, FromData, LazyArray16};
 use super::StringId;
+use crate::parser::{FromData, LazyArray16, Stream};
+use crate::GlyphId;
 
 /// The Standard Encoding as defined in the Adobe Technical Note #5176 Appendix B.
-pub const STANDARD_ENCODING: [u8;256] = [
-      0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-      0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-      1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16,
-     17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,  32,
-     33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,
-     49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,
-     65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  80,
-     81,  82,  83,  84,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,   0,
-      0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-      0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-      0,  96,  97,  98,  99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
-      0, 111, 112, 113, 114,   0, 115, 116, 117, 118, 119, 120, 121, 122,   0, 123,
-      0, 124, 125, 126, 127, 128, 129, 130, 131,   0, 132, 133,   0, 134, 135, 136,
-    137,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-      0, 138,   0, 139,   0,   0,   0,   0, 140, 141, 142, 143,   0,   0,   0,   0,
-      0, 144,   0,   0,   0, 145,   0,   0, 146, 147, 148, 149,   0,   0,   0,   0,
+pub const STANDARD_ENCODING: [u8; 256] = [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+    27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+    51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+    75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96,
+    97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 0, 111, 112, 113, 114, 0,
+    115, 116, 117, 118, 119, 120, 121, 122, 0, 123, 0, 124, 125, 126, 127, 128, 129, 130, 131, 0,
+    132, 133, 0, 134, 135, 136, 137, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 138, 0, 139,
+    0, 0, 0, 0, 140, 141, 142, 143, 0, 0, 0, 0, 0, 144, 0, 0, 0, 145, 0, 0, 146, 147, 148, 149, 0,
+    0, 0, 0,
 ];
 
 /// The Expert Encoding conversion as defined in the Adobe Technical Note #5176 Appendix C.
 #[cfg(feature = "glyph-names")]
 const EXPERT_ENCODING: &[u16] = &[
-      0,    1,  229,  230,  231,  232,  233,  234,  235,  236,  237,  238,   13,   14,   15,   99,
-    239,  240,  241,  242,  243,  244,  245,  246,  247,  248,   27,   28,  249,  250,  251,  252,
-    253,  254,  255,  256,  257,  258,  259,  260,  261,  262,  263,  264,  265,  266,  109,  110,
-    267,  268,  269,  270,  271,  272,  273,  274,  275,  276,  277,  278,  279,  280,  281,  282,
-    283,  284,  285,  286,  287,  288,  289,  290,  291,  292,  293,  294,  295,  296,  297,  298,
-    299,  300,  301,  302,  303,  304,  305,  306,  307,  308,  309,  310,  311,  312,  313,  314,
-    315,  316,  317,  318,  158,  155,  163,  319,  320,  321,  322,  323,  324,  325,  326,  150,
-    164,  169,  327,  328,  329,  330,  331,  332,  333,  334,  335,  336,  337,  338,  339,  340,
-    341,  342,  343,  344,  345,  346,  347,  348,  349,  350,  351,  352,  353,  354,  355,  356,
-    357,  358,  359,  360,  361,  362,  363,  364,  365,  366,  367,  368,  369,  370,  371,  372,
-    373,  374,  375,  376,  377,  378,
+    0, 1, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 13, 14, 15, 99, 239, 240, 241, 242,
+    243, 244, 245, 246, 247, 248, 27, 28, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259,
+    260, 261, 262, 263, 264, 265, 266, 109, 110, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276,
+    277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295,
+    296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314,
+    315, 316, 317, 318, 158, 155, 163, 319, 320, 321, 322, 323, 324, 325, 326, 150, 164, 169, 327,
+    328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346,
+    347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365,
+    366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378,
 ];
 
 /// The Expert Subset Encoding conversion as defined in the Adobe Technical Note #5176 Appendix C.
 #[cfg(feature = "glyph-names")]
 const EXPERT_SUBSET_ENCODING: &[u16] = &[
-      0,    1,  231,  232,  235,  236,  237,  238,   13,   14,   15,   99,  239,  240,  241,  242,
-    243,  244,  245,  246,  247,  248,   27,   28,  249,  250,  251,  253,  254,  255,  256,  257,
-    258,  259,  260,  261,  262,  263,  264,  265,  266,  109,  110,  267,  268,  269,  270,  272,
-    300,  301,  302,  305,  314,  315,  158,  155,  163,  320,  321,  322,  323,  324,  325,  326,
-    150,  164,  169,  327,  328,  329,  330,  331,  332,  333,  334,  335,  336,  337,  338,  339,
-    340,  341,  342,  343,  344,  345,  346
+    0, 1, 231, 232, 235, 236, 237, 238, 13, 14, 15, 99, 239, 240, 241, 242, 243, 244, 245, 246,
+    247, 248, 27, 28, 249, 250, 251, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264,
+    265, 266, 109, 110, 267, 268, 269, 270, 272, 300, 301, 302, 305, 314, 315, 158, 155, 163, 320,
+    321, 322, 323, 324, 325, 326, 150, 164, 169, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336,
+    337, 338, 339, 340, 341, 342, 343, 344, 345, 346,
 ];
-
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Format1Range {
@@ -69,7 +60,6 @@ impl FromData for Format1Range {
     }
 }
 
-
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Format2Range {
     first: StringId,
@@ -88,7 +78,6 @@ impl FromData for Format2Range {
         })
     }
 }
-
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum Charset<'a> {
@@ -110,7 +99,10 @@ impl Charset<'_> {
             Charset::ISOAdobe | Charset::Expert | Charset::ExpertSubset => None,
             Charset::Format0(ref array) => {
                 // First glyph is omitted, so we have to add 1.
-                array.into_iter().position(|n| n == sid).map(|n| GlyphId(n as u16 + 1))
+                array
+                    .into_iter()
+                    .position(|n| n == sid)
+                    .map(|n| GlyphId(n as u16 + 1))
             }
             Charset::Format1(array) => {
                 let mut glyph_id = GlyphId(1);
@@ -118,7 +110,7 @@ impl Charset<'_> {
                     let last = u32::from(range.first.0) + u32::from(range.left);
                     if range.first <= sid && u32::from(sid.0) <= last {
                         glyph_id.0 += sid.0 - range.first.0;
-                        return Some(glyph_id)
+                        return Some(glyph_id);
                     }
 
                     glyph_id.0 += u16::from(range.left) + 1;
@@ -133,7 +125,7 @@ impl Charset<'_> {
                     let last = u32::from(range.first.0) + u32::from(range.left);
                     if sid >= range.first && u32::from(sid.0) <= last {
                         glyph_id.0 += sid.0 - range.first.0;
-                        return Some(glyph_id)
+                        return Some(glyph_id);
                     }
 
                     glyph_id.0 += range.left + 1;
@@ -148,14 +140,20 @@ impl Charset<'_> {
     pub fn gid_to_sid(&self, gid: GlyphId) -> Option<StringId> {
         match self {
             Charset::ISOAdobe => {
-                if gid.0 <= 228 { Some(StringId(gid.0)) } else { None }
+                if gid.0 <= 228 {
+                    Some(StringId(gid.0))
+                } else {
+                    None
+                }
             }
-            Charset::Expert => {
-                EXPERT_ENCODING.get(usize::from(gid.0)).cloned().map(StringId)
-            }
-            Charset::ExpertSubset => {
-                EXPERT_SUBSET_ENCODING.get(usize::from(gid.0)).cloned().map(StringId)
-            }
+            Charset::Expert => EXPERT_ENCODING
+                .get(usize::from(gid.0))
+                .cloned()
+                .map(StringId),
+            Charset::ExpertSubset => EXPERT_SUBSET_ENCODING
+                .get(usize::from(gid.0))
+                .cloned()
+                .map(StringId),
             Charset::Format0(ref array) => {
                 if gid.0 == 0 {
                     Some(StringId(0))
@@ -209,7 +207,9 @@ pub(crate) fn parse_charset<'a>(number_of_glyphs: u16, s: &mut Stream<'a>) -> Op
     // -1 everywhere, since `.notdef` is omitted.
     let format = s.read::<u8>()?;
     match format {
-        0 => Some(Charset::Format0(s.read_array16::<StringId>(number_of_glyphs - 1)?)),
+        0 => Some(Charset::Format0(
+            s.read_array16::<StringId>(number_of_glyphs - 1)?,
+        )),
         1 => {
             // The number of ranges is not defined, so we have to
             // read until no glyphs are left.

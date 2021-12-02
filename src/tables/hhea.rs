@@ -20,7 +20,7 @@ impl Table {
     /// Parses a table from raw data.
     pub fn parse(data: &[u8]) -> Option<Self> {
         if data.len() != 36 {
-            return None
+            return None;
         }
 
         let mut s = Stream::new(data);

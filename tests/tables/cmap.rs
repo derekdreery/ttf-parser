@@ -26,7 +26,7 @@ mod format0 {
 }
 
 mod format2 {
-    use ttf_parser::{cmap, GlyphId, parser::FromData};
+    use ttf_parser::{cmap, parser::FromData, GlyphId};
 
     #[test]
     fn collect_codepoints() {
@@ -294,13 +294,28 @@ mod format4 {
         ];
 
         let subtable = cmap::Subtable4::parse(data).unwrap();
-        assert_eq!(subtable.glyph_index(0x40 as char),  None);
-        assert_eq!(subtable.glyph_index(0x50 as char),  Some(GlyphId(1)));
-        assert_eq!(subtable.glyph_index(std::char::from_u32(0x100).unwrap()), Some(GlyphId(10)));
-        assert_eq!(subtable.glyph_index(std::char::from_u32(0x150).unwrap()), Some(GlyphId(100)));
-        assert_eq!(subtable.glyph_index(std::char::from_u32(0x200).unwrap()), Some(GlyphId(1000)));
-        assert_eq!(subtable.glyph_index(std::char::from_u32(0x250).unwrap()), Some(GlyphId(10000)));
-        assert_eq!(subtable.glyph_index(std::char::from_u32(0x300).unwrap()), None);
+        assert_eq!(subtable.glyph_index(0x40 as char), None);
+        assert_eq!(subtable.glyph_index(0x50 as char), Some(GlyphId(1)));
+        assert_eq!(
+            subtable.glyph_index(std::char::from_u32(0x100).unwrap()),
+            Some(GlyphId(10))
+        );
+        assert_eq!(
+            subtable.glyph_index(std::char::from_u32(0x150).unwrap()),
+            Some(GlyphId(100))
+        );
+        assert_eq!(
+            subtable.glyph_index(std::char::from_u32(0x200).unwrap()),
+            Some(GlyphId(1000))
+        );
+        assert_eq!(
+            subtable.glyph_index(std::char::from_u32(0x250).unwrap()),
+            Some(GlyphId(10000))
+        );
+        assert_eq!(
+            subtable.glyph_index(std::char::from_u32(0x300).unwrap()),
+            None
+        );
     }
 
     #[test]
@@ -391,7 +406,8 @@ mod format4 {
     fn invalid_length() {
         let data = &[
             0x00, 0x04, // format: 4
-            0x00, 0x10, // subtable size: 16 <-- the size should be 32, but we don't check it anyway
+            0x00,
+            0x10, // subtable size: 16 <-- the size should be 32, but we don't check it anyway
             0x00, 0x00, // language ID: 0
             0x00, 0x04, // 2 x segCount: 4
             0x00, 0x02, // search range: 2
@@ -444,7 +460,10 @@ mod format4 {
 
         let subtable = cmap::Subtable4::parse(data).unwrap();
         // Format 4 support only u16 codepoints, so we have to bail immediately otherwise.
-        assert_eq!(subtable.glyph_index(std::char::from_u32(0x1FFFF).unwrap()), None);
+        assert_eq!(
+            subtable.glyph_index(std::char::from_u32(0x1FFFF).unwrap()),
+            None
+        );
     }
 
     #[test]

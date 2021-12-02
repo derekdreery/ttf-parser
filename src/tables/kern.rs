@@ -14,15 +14,21 @@ a kerning algorithm manually.
 But we still try to keep the API as high-level as possible.
 */
 
-use crate::GlyphId;
 use crate::parser::{FromData, LazyArray16, NumFrom, Offset, Offset16, Stream};
+use crate::GlyphId;
 
 #[derive(Clone, Copy, Debug)]
 struct OTCoverage(u8);
 
 impl OTCoverage {
-    #[inline] fn is_horizontal(self) -> bool { self.0 & (1 << 0) != 0 }
-    #[inline] fn has_cross_stream(self) -> bool { self.0 & (1 << 2) != 0 }
+    #[inline]
+    fn is_horizontal(self) -> bool {
+        self.0 & (1 << 0) != 0
+    }
+    #[inline]
+    fn has_cross_stream(self) -> bool {
+        self.0 & (1 << 2) != 0
+    }
 }
 
 impl FromData for OTCoverage {
@@ -34,14 +40,22 @@ impl FromData for OTCoverage {
     }
 }
 
-
 #[derive(Clone, Copy, Debug)]
 struct AATCoverage(u8);
 
 impl AATCoverage {
-    #[inline] fn is_horizontal(self) -> bool { self.0 & (1 << 7) == 0 }
-    #[inline] fn has_cross_stream(self) -> bool { self.0 & (1 << 6) != 0 }
-    #[inline] fn is_variable(self) -> bool { self.0 & (1 << 5) != 0 }
+    #[inline]
+    fn is_horizontal(self) -> bool {
+        self.0 & (1 << 7) == 0
+    }
+    #[inline]
+    fn has_cross_stream(self) -> bool {
+        self.0 & (1 << 6) != 0
+    }
+    #[inline]
+    fn is_variable(self) -> bool {
+        self.0 & (1 << 5) != 0
+    }
 }
 
 impl FromData for AATCoverage {
@@ -52,7 +66,6 @@ impl FromData for AATCoverage {
         data.get(0).copied().map(AATCoverage)
     }
 }
-
 
 /// A kerning pair.
 #[derive(Clone, Copy, Debug)]
@@ -93,7 +106,6 @@ impl FromData for KerningPair {
     }
 }
 
-
 /// A kerning subtable format.
 #[allow(missing_docs)]
 #[derive(Clone, Copy, Debug)]
@@ -103,7 +115,6 @@ pub enum Format<'a> {
     Format2(Subtable2<'a>),
     Format3(Subtable3<'a>),
 }
-
 
 /// A kerning subtable.
 #[derive(Clone, Copy, Debug)]
@@ -136,7 +147,6 @@ impl<'a> Subtable<'a> {
         }
     }
 }
-
 
 /// A list of subtables.
 ///
@@ -179,7 +189,6 @@ impl<'a> IntoIterator for Subtables<'a> {
         }
     }
 }
-
 
 /// An iterator over kerning subtables.
 #[allow(missing_debug_implementations)]
@@ -283,7 +292,6 @@ impl<'a> Iterator for SubtablesIter<'a> {
     }
 }
 
-
 /// A format 0 subtable.
 ///
 /// Ordered List of Kerning Pairs.
@@ -307,10 +315,11 @@ impl<'a> Subtable0<'a> {
     #[inline]
     pub fn glyphs_kerning(&self, left: GlyphId, right: GlyphId) -> Option<i16> {
         let needle = u32::from(left.0) << 16 | u32::from(right.0);
-        self.pairs.binary_search_by(|v| v.pair.cmp(&needle)).map(|(_, v)| v.value)
+        self.pairs
+            .binary_search_by(|v| v.pair.cmp(&needle))
+            .map(|(_, v)| v.value)
     }
 }
-
 
 /// A format 2 subtable.
 ///
@@ -345,7 +354,8 @@ impl<'a> Subtable2<'a> {
         // and fetching the kerning value to which the new address points.'
 
         let left_class = get_format2_class(left.0, left_hand_table_offset, self.data).unwrap_or(0);
-        let right_class = get_format2_class(right.0, right_hand_table_offset, self.data).unwrap_or(0);
+        let right_class =
+            get_format2_class(right.0, right_hand_table_offset, self.data).unwrap_or(0);
 
         // 'Values within the left-hand offset table should not be less than the kerning array offset.'
         if usize::from(left_class) < array_offset {
@@ -368,7 +378,6 @@ fn get_format2_class(glyph_id: u16, offset: usize, data: &[u8]) -> Option<u16> {
     let classes = s.read_array16::<u16>(number_of_classes)?;
     classes.get(index)
 }
-
 
 /// A format 3 subtable.
 ///
@@ -394,7 +403,8 @@ impl<'a> Subtable3<'a> {
         let left_hand_classes_count = s.read::<u8>()?;
         let right_hand_classes_count = s.read::<u8>()?;
         s.skip::<u8>(); // reserved
-        let indices_count = u16::from(left_hand_classes_count) * u16::from(right_hand_classes_count);
+        let indices_count =
+            u16::from(left_hand_classes_count) * u16::from(right_hand_classes_count);
 
         let kerning_values = s.read_array16::<i16>(u16::from(kerning_values_count))?;
         let left_hand_classes = s.read_array16::<u8>(glyph_count)?;
@@ -408,12 +418,12 @@ impl<'a> Subtable3<'a> {
             return None;
         }
 
-        let index = u16::from(left_class) * u16::from(right_hand_classes_count) + u16::from(right_class);
+        let index =
+            u16::from(left_class) * u16::from(right_hand_classes_count) + u16::from(right_class);
         let index = indices.get(index)?;
         kerning_values.get(u16::from(index))
     }
 }
-
 
 /// A [Kerning Table](https://docs.microsoft.com/en-us/typography/opentype/spec/kern).
 #[derive(Clone, Copy, Debug)]
@@ -444,7 +454,7 @@ impl<'a> Table<'a> {
             }
         } else {
             s.skip::<u16>(); // Skip the second part of u32 version.
-            // Note that AAT stores the number of tables as u32 and not as u16.
+                             // Note that AAT stores the number of tables as u32 and not as u16.
             let count = s.read::<u32>()?;
             Subtables {
                 is_aat: true,

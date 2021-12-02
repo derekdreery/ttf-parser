@@ -4,12 +4,14 @@ mod hmtx;
 mod maxp;
 mod sbix;
 
-use ttf_parser::{Face, FaceParsingError, fonts_in_collection};
+use ttf_parser::{fonts_in_collection, Face, FaceParsingError};
 
 #[test]
 fn empty_font() {
-    assert_eq!(Face::from_slice(&[], 0).unwrap_err(),
-               FaceParsingError::UnknownMagic);
+    assert_eq!(
+        Face::from_slice(&[], 0).unwrap_err(),
+        FaceParsingError::UnknownMagic
+    );
 }
 
 #[test]
@@ -22,8 +24,10 @@ fn zero_tables() {
         0x00, 0x00, // rangeShift: 0
     ];
 
-    assert_eq!(Face::from_slice(data, 0).unwrap_err(),
-               FaceParsingError::NoHeadTable);
+    assert_eq!(
+        Face::from_slice(data, 0).unwrap_err(),
+        FaceParsingError::NoHeadTable
+    );
 }
 
 #[test]
@@ -36,8 +40,10 @@ fn tables_count_overflow() {
         0x00, 0x00, // rangeShift: 0
     ];
 
-    assert_eq!(Face::from_slice(data, 0).unwrap_err(),
-               FaceParsingError::MalformedFont);
+    assert_eq!(
+        Face::from_slice(data, 0).unwrap_err(),
+        FaceParsingError::MalformedFont
+    );
 }
 
 #[test]
@@ -50,8 +56,10 @@ fn empty_font_collection() {
     ];
 
     assert_eq!(fonts_in_collection(data), Some(0));
-    assert_eq!(Face::from_slice(data, 0).unwrap_err(),
-               FaceParsingError::FaceIndexOutOfBounds);
+    assert_eq!(
+        Face::from_slice(data, 0).unwrap_err(),
+        FaceParsingError::FaceIndexOutOfBounds
+    );
 }
 
 #[test]
@@ -64,8 +72,10 @@ fn font_collection_num_fonts_overflow() {
     ];
 
     assert_eq!(fonts_in_collection(data), Some(std::u32::MAX));
-    assert_eq!(Face::from_slice(data, 0).unwrap_err(),
-               FaceParsingError::MalformedFont);
+    assert_eq!(
+        Face::from_slice(data, 0).unwrap_err(),
+        FaceParsingError::MalformedFont
+    );
 }
 
 #[test]
@@ -79,6 +89,8 @@ fn font_index_overflow() {
     ];
 
     assert_eq!(fonts_in_collection(data), Some(1));
-    assert_eq!(Face::from_slice(data, std::u32::MAX).unwrap_err(),
-               FaceParsingError::FaceIndexOutOfBounds);
+    assert_eq!(
+        Face::from_slice(data, std::u32::MAX).unwrap_err(),
+        FaceParsingError::FaceIndexOutOfBounds
+    );
 }
